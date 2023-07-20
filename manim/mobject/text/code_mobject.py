@@ -51,6 +51,7 @@ class Code(MarkupText):
         language: str | None = None,
         file_encoding: str | None = None,
         style: str | None = None,
+        font_size: float = 24,
         margin: float = 0.3,
         indentation_chars: str = "    ",
         background: str = "rectangle",  # or window
@@ -102,6 +103,7 @@ class Code(MarkupText):
 
         super().__init__(
             text=pango_code,
+            font_size=font_size,
             **kwargs,
         )
 
