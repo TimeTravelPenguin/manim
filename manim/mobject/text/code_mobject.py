@@ -7,8 +7,8 @@ __all__ = [
 ]
 
 import html
-import os
 import re
+from os import PathLike
 from pathlib import Path
 
 import numpy as np
@@ -160,15 +160,18 @@ class Code(VGroup):
 
     def __init__(
         self,
-        file_name: str | os.PathLike | None = None,
         code: str | None = None,
+        code_file_path: str | PathLike | None = None,
+        *,
+        language: str | None = None,
+        file_encoding: str | None = None,
         tab_width: int = 3,
         line_spacing: float = 0.3,
         font_size: float = 24,
         font: str = "Monospace",  # This should be in the font list on all platforms.
         stroke_width: float = 0,
         margin: float = 0.3,
-        indentation_chars: str = "    ",
+        indentation_chars: str = "    ",  # TODO: Should this instead be tabsize?
         background: str = "rectangle",  # or window
         background_stroke_width: float = 1,
         background_stroke_color: str = WHITE,
@@ -177,7 +180,6 @@ class Code(VGroup):
         line_no_from: int = 1,
         line_no_buff: float = 0.4,
         style: str = "vim",
-        language: str | None = None,
         generate_html_file: bool = False,
         warn_missing_font: bool = True,
         **kwargs,
@@ -200,24 +202,22 @@ class Code(VGroup):
         self.insert_line_no = insert_line_no
         self.line_no_from = line_no_from
         self.line_no_buff = line_no_buff
-        self.style = style
+        self.style = style.lower() if style else None
         self.language = language
         self.generate_html_file = generate_html_file
 
-        self.file_path = None
-        self.file_name = file_name
-        if self.file_name:
-            self._ensure_valid_file()
-            self.code_string = self.file_path.read_text(encoding="utf-8")
-        elif code:
+        if code and code_file_path:
+            # TODO: Is this the right kind of error?
+            raise ValueError("Both 'code' and 'code_file_path' arguments cannot be set")
+
+        if code:
             self.code_string = code
+        elif code_file_path:
+            self.code_string = self._read_code_file(code_file_path, encoding="utf-8")
         else:
-            raise ValueError(
-                "Neither a code file nor a code string have been specified.",
-            )
-        if isinstance(self.style, str):
-            self.style = self.style.lower()
-        self._gen_html_string()
+            raise ValueError("Either 'code' or 'code_file_path' arguments must be set")
+
+        """ self._gen_html_string()
         strati = self.html_string.find("background:")
         self.background_color = self.html_string[strati + 12 : strati + 19]
         self._gen_code_json()
@@ -285,34 +285,33 @@ class Code(VGroup):
                 self.code,
                 **kwargs,
             )
-        self.move_to(np.array([0, 0, 0]))
+        self.move_to(np.array([0, 0, 0])) """
 
-    def _ensure_valid_file(self):
+    def _read_code_file(
+        self,
+        file_path: str | PathLike,
+        *,
+        encoding: str | None = None,
+    ) -> str:
         """Function to validate file."""
-        if self.file_name is None:
-            raise Exception("Must specify file for Code")
-        possible_paths = [
-            Path() / "assets" / "codes" / self.file_name,
-            Path(self.file_name).expanduser(),
-        ]
-        for path in possible_paths:
-            if path.exists():
-                self.file_path = path
-                return
-        error = (
-            f"From: {Path.cwd()}, could not find {self.file_name} at either "
-            + f"of these locations: {list(map(str, possible_paths))}"
-        )
-        raise OSError(error)
+        if file_path is None:
+            raise ValueError("Name of file cannot be None")
 
-    def _gen_line_numbers(self):
-        """Function to generate line_numbers.
+        file_path = Path(file_path).resolve(strict=True)
+        if not file_path.is_file():
+            raise IsADirectoryError(f"The provided path '{file_path}' is not a file")
+
+        # Note on valid encodings: https://docs.python.org/3/library/codecs.html#standard-encodings
+        return file_path.read_text(encoding=encoding)
+
+    """ def _gen_line_numbers(self):
+        \"""Function to generate line_numbers.
 
         Returns
         -------
         :class:`~.Paragraph`
             The generated line_numbers according to parameters.
-        """
+        \"""
         line_numbers_array = []
         for line_no in range(0, self.code_json.__len__()):
             number = str(self.line_no_from + line_no)
@@ -329,294 +328,4 @@ class Code(VGroup):
         )
         for i in line_numbers:
             i.set_color(self.default_color)
-        return line_numbers
-
-    def _gen_colored_lines(self):
-        """Function to generate code.
-
-        Returns
-        -------
-        :class:`~.Paragraph`
-            The generated code according to parameters.
-        """
-        lines_text = []
-        for line_no in range(0, self.code_json.__len__()):
-            line_str = ""
-            for word_index in range(self.code_json[line_no].__len__()):
-                line_str = line_str + self.code_json[line_no][word_index][0]
-            lines_text.append(self.tab_spaces[line_no] * "\t" + line_str)
-        code = Paragraph(
-            *list(lines_text),
-            line_spacing=self.line_spacing,
-            tab_width=self.tab_width,
-            font_size=self.font_size,
-            font=self.font,
-            disable_ligatures=True,
-            stroke_width=self.stroke_width,
-            warn_missing_font=self.warn_missing_font,
-        )
-        for line_no in range(code.__len__()):
-            line = code.chars[line_no]
-            line_char_index = self.tab_spaces[line_no]
-            for word_index in range(self.code_json[line_no].__len__()):
-                line[
-                    line_char_index : line_char_index
-                    + self.code_json[line_no][word_index][0].__len__()
-                ].set_color(self.code_json[line_no][word_index][1])
-                line_char_index += self.code_json[line_no][word_index][0].__len__()
-        return code
-
-    def _gen_html_string(self):
-        """Function to generate html string with code highlighted and stores in variable html_string."""
-        self.html_string = _hilite_me(
-            self.code_string,
-            self.language,
-            self.style,
-            self.insert_line_no,
-            "border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;",
-            self.file_path,
-            self.line_no_from,
-        )
-
-        if self.generate_html_file:
-            output_folder = Path() / "assets" / "codes" / "generated_html_files"
-            output_folder.mkdir(parents=True, exist_ok=True)
-            (output_folder / f"{self.file_name}.html").write_text(self.html_string)
-
-    def _gen_code_json(self):
-        """Function to background_color, generate code_json and tab_spaces from html_string.
-        background_color is just background color of displayed code.
-        code_json is 2d array with rows as line numbers
-        and columns as a array with length 2 having text and text's color value.
-        tab_spaces is 2d array with rows as line numbers
-        and columns as corresponding number of indentation_chars in front of that line in code.
-        """
-        if (
-            self.background_color == "#111111"
-            or self.background_color == "#272822"
-            or self.background_color == "#202020"
-            or self.background_color == "#000000"
-        ):
-            self.default_color = "#ffffff"
-        else:
-            self.default_color = "#000000"
-        # print(self.default_color,self.background_color)
-        for i in range(3, -1, -1):
-            self.html_string = self.html_string.replace("</" + " " * i, "</")
-
-        # handle pygments bug
-        # https://github.com/pygments/pygments/issues/961
-        self.html_string = self.html_string.replace("<span></span>", "")
-
-        for i in range(10, -1, -1):
-            self.html_string = self.html_string.replace(
-                "</span>" + " " * i,
-                " " * i + "</span>",
-            )
-        self.html_string = self.html_string.replace("background-color:", "background:")
-
-        if self.insert_line_no:
-            start_point = self.html_string.find("</td><td><pre")
-            start_point = start_point + 9
-        else:
-            start_point = self.html_string.find("<pre")
-        self.html_string = self.html_string[start_point:]
-        # print(self.html_string)
-        lines = self.html_string.split("\n")
-        lines = lines[0 : lines.__len__() - 2]
-        start_point = lines[0].find(">")
-        lines[0] = lines[0][start_point + 1 :]
-        # print(lines)
-        self.code_json = []
-        self.tab_spaces = []
-        code_json_line_index = -1
-        for line_index in range(0, lines.__len__()):
-            # print(lines[line_index])
-            self.code_json.append([])
-            code_json_line_index = code_json_line_index + 1
-            if lines[line_index].startswith(self.indentation_chars):
-                start_point = lines[line_index].find("<")
-                starting_string = lines[line_index][:start_point]
-                indentation_chars_count = lines[line_index][:start_point].count(
-                    self.indentation_chars,
-                )
-                if (
-                    starting_string.__len__()
-                    != indentation_chars_count * self.indentation_chars.__len__()
-                ):
-                    lines[line_index] = (
-                        "\t" * indentation_chars_count
-                        + starting_string[
-                            starting_string.rfind(self.indentation_chars)
-                            + self.indentation_chars.__len__() :
-                        ]
-                        + lines[line_index][start_point:]
-                    )
-                else:
-                    lines[line_index] = (
-                        "\t" * indentation_chars_count + lines[line_index][start_point:]
-                    )
-            indentation_chars_count = 0
-            if lines[line_index]:
-                while lines[line_index][indentation_chars_count] == "\t":
-                    indentation_chars_count = indentation_chars_count + 1
-            self.tab_spaces.append(indentation_chars_count)
-            # print(lines[line_index])
-            lines[line_index] = self._correct_non_span(lines[line_index])
-            # print(lines[line_index])
-            words = lines[line_index].split("<span")
-            for word_index in range(1, words.__len__()):
-                color_index = words[word_index].find("color:")
-                if color_index == -1:
-                    color = self.default_color
-                else:
-                    starti = words[word_index][color_index:].find("#")
-                    color = words[word_index][
-                        color_index + starti : color_index + starti + 7
-                    ]
-                start_point = words[word_index].find(">")
-                end_point = words[word_index].find("</span>")
-                text = words[word_index][start_point + 1 : end_point]
-                text = html.unescape(text)
-                if text != "":
-                    # print(text, "'" + color + "'")
-                    self.code_json[code_json_line_index].append([text, color])
-        # print(self.code_json)
-
-    def _correct_non_span(self, line_str: str):
-        """Function put text color to those strings that don't have one according to background_color of displayed code.
-
-        Parameters
-        ---------
-        line_str
-            Takes a html element's string to put color to it according to background_color of displayed code.
-
-        Returns
-        -------
-        :class:`str`
-            The generated html element's string with having color attributes.
-        """
-        words = line_str.split("</span>")
-        line_str = ""
-        for i in range(0, words.__len__()):
-            if i != words.__len__() - 1:
-                j = words[i].find("<span")
-            else:
-                j = words[i].__len__()
-            temp = ""
-            starti = -1
-            for k in range(0, j):
-                if words[i][k] == "\t" and starti == -1:
-                    continue
-                else:
-                    if starti == -1:
-                        starti = k
-                    temp = temp + words[i][k]
-            if temp != "":
-                if i != words.__len__() - 1:
-                    temp = (
-                        '<span style="color:'
-                        + self.default_color
-                        + '">'
-                        + words[i][starti:j]
-                        + "</span>"
-                    )
-                else:
-                    temp = (
-                        '<span style="color:'
-                        + self.default_color
-                        + '">'
-                        + words[i][starti:j]
-                    )
-                temp = temp + words[i][j:]
-                words[i] = temp
-            if words[i] != "":
-                line_str = line_str + words[i] + "</span>"
-        return line_str
-
-
-def _hilite_me(
-    code: str,
-    language: str,
-    style: str,
-    insert_line_no: bool,
-    divstyles: str,
-    file_path: Path,
-    line_no_from: int,
-):
-    """Function to highlight code from string to html.
-
-    Parameters
-    ---------
-    code
-        Code string.
-    language
-        The name of the programming language the given code was written in.
-    style
-        Code style name.
-    insert_line_no
-        Defines whether line numbers should be inserted in the html file.
-    divstyles
-        Some html css styles.
-    file_path
-        Path of code file.
-    line_no_from
-        Defines the first line's number in the line count.
-    """
-    style = style or "colorful"
-    defstyles = "overflow:auto;width:auto;"
-
-    formatter = HtmlFormatter(
-        style=style,
-        linenos=False,
-        noclasses=True,
-        cssclass="",
-        cssstyles=defstyles + divstyles,
-        prestyles="margin: 0",
-    )
-    if language is None and file_path:
-        lexer = guess_lexer_for_filename(file_path, code)
-        html = highlight(code, lexer, formatter)
-    elif language is None:
-        raise ValueError(
-            "The code language has to be specified when rendering a code string",
-        )
-    else:
-        html = highlight(code, get_lexer_by_name(language, **{}), formatter)
-    if insert_line_no:
-        html = _insert_line_numbers_in_html(html, line_no_from)
-    html = "<!-- HTML generated by Code() -->" + html
-    return html
-
-
-def _insert_line_numbers_in_html(html: str, line_no_from: int):
-    """Function that inserts line numbers in the highlighted HTML code.
-
-    Parameters
-    ---------
-    html
-        html string of highlighted code.
-    line_no_from
-        Defines the first line's number in the line count.
-
-    Returns
-    -------
-    :class:`str`
-        The generated html string with having line numbers.
-    """
-    match = re.search("(<pre[^>]*>)(.*)(</pre>)", html, re.DOTALL)
-    if not match:
-        return html
-    pre_open = match.group(1)
-    pre = match.group(2)
-    pre_close = match.group(3)
-
-    html = html.replace(pre_close, "</pre></td></tr></table>")
-    numbers = range(line_no_from, line_no_from + pre.count("\n") + 1)
-    format_lines = "%" + str(len(str(numbers[-1]))) + "i"
-    lines = "\n".join(format_lines % i for i in numbers)
-    html = html.replace(
-        pre_open,
-        "<table><tr><td>" + pre_open + lines + "</pre></td><td>" + pre_open,
-    )
-    return html
+        return line_numbers """
