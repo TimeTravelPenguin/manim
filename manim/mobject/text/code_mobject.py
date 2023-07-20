@@ -82,7 +82,7 @@ class Code(MarkupText):
         ).resolve()  # doesn't need to be resolved here
         code_is_path = code_path.is_file()
         if code_is_path:
-            self.code_string: str = self._read_code_file(
+            self.code_string: str = read_code_file(
                 Path(code_or_filepath),
                 encoding=file_encoding,
             )
@@ -107,19 +107,19 @@ class Code(MarkupText):
             **kwargs,
         )
 
-    def _read_code_file(
-        self,
-        file_path: Path,
-        *,
-        encoding: str | None = None,
-    ) -> str:
-        """Function to validate file."""
-        if file_path is None:
-            raise ValueError("Name of file cannot be None")
 
-        file_path = file_path.resolve(strict=True)
-        if not file_path.is_file():
-            raise FileNotFoundError(f"The provided path '{file_path}' is not a file")
+def read_code_file(
+    file_path: Path,
+    *,
+    encoding: str | None = None,
+) -> str:
+    """Function to validate file."""
+    if file_path is None:
+        raise ValueError("Name of file cannot be None")
 
-        # Note on valid encodings: https://docs.python.org/3/library/codecs.html#standard-encodings
-        return file_path.read_text(encoding=encoding)
+    file_path = file_path.resolve(strict=True)
+    if not file_path.is_file():
+        raise FileNotFoundError(f"The provided path '{file_path}' is not a file")
+
+    # Note on valid encodings: https://docs.python.org/3/library/codecs.html#standard-encodings
+    return file_path.read_text(encoding=encoding)
