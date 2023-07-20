@@ -14,7 +14,8 @@ from pathlib import Path
 import numpy as np
 from pygments import highlight
 from pygments.formatters.html import HtmlFormatter
-from pygments.lexers import get_lexer_by_name, guess_lexer_for_filename
+from pygments.formatters.pangomarkup import PangoMarkupFormatter
+from pygments.lexers import get_lexer_by_name, guess_lexer, guess_lexer_for_filename
 from pygments.styles import get_all_styles
 
 from manim import logger
@@ -216,6 +217,20 @@ class Code(VGroup):
             self.code_string = self._read_code_file(code_file_path, encoding="utf-8")
         else:
             raise ValueError("Either 'code' or 'code_file_path' arguments must be set")
+
+        if self.language:
+            lexer = get_lexer_by_name(self.language)
+        elif code_file_path:
+            lexer = guess_lexer_for_filename(
+                code_file_path, self.code_string
+            )  # TODO: Handle invalid file paths *if needed*
+        else:
+            lexer = guess_lexer(self.code_string)
+
+        # self.highlight = highlight(self.code_string, lexer, HtmlFormatter(style=self.style))
+        self.Text = highlight(
+            self.code_string, lexer, PangoMarkupFormatter(style=self.style)
+        )
 
         """ self._gen_html_string()
         strati = self.html_string.find("background:")
