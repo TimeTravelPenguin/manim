@@ -2466,6 +2466,17 @@ tk = ["pyopengltk (>=0.0.3)"]
 trimesh = ["scipy (>=1.3.2)", "trimesh (>=3.2.6,<4)"]
 
 [[package]]
+name = "more-itertools"
+version = "9.1.0"
+description = "More routines for operating on iterables, beyond itertools"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "more-itertools-9.1.0.tar.gz", hash = "sha256:cabaa341ad0389ea83c17a94566a53ae4c9d07349861ecb14dc6d0345cf9ac5d"},
+    {file = "more_itertools-9.1.0-py3-none-any.whl", hash = "sha256:d2bc7f02446e86a68911e58ded76d6561eea00cddfb2a91e7019bbb586c799f3"},
+]
+
+[[package]]
 name = "multipledispatch"
 version = "1.0.0"
 description = "Multiple dispatch"
@@ -4493,13 +4504,13 @@ files = [
 
 [[package]]
 name = "types-pygments"
-version = "2.15.0.1"
+version = "2.15.0.2"
 description = "Typing stubs for Pygments"
 optional = false
 python-versions = "*"
 files = [
-    {file = "types-Pygments-2.15.0.1.tar.gz", hash = "sha256:4fef924a4be98e4b0a3701f2822c33186cacd7dc317267853eaf451c3f361a97"},
-    {file = "types_Pygments-2.15.0.1-py3-none-any.whl", hash = "sha256:3a356cef78d667f55d3a27f5f73aa82994187dc93fcd93d970ba7479ed3f8534"},
+    {file = "types-Pygments-2.15.0.2.tar.gz", hash = "sha256:a1b56b792aa1015f6cecd092af00c71ecb12d9d5dd0a30313f9cb3839044389a"},
+    {file = "types_Pygments-2.15.0.2-py3-none-any.whl", hash = "sha256:60fc96777722942eafd4e7cd248568861aa8696246e3b1effcddabd51001a977"},
 ]
 
 [package.dependencies]
@@ -4508,13 +4519,13 @@ types-setuptools = "*"
 
 [[package]]
 name = "types-requests"
-version = "2.31.0.1"
+version = "2.31.0.2"
 description = "Typing stubs for requests"
 optional = false
 python-versions = "*"
 files = [
-    {file = "types-requests-2.31.0.1.tar.gz", hash = "sha256:3de667cffa123ce698591de0ad7db034a5317457a596eb0b4944e5a9d9e8d1ac"},
-    {file = "types_requests-2.31.0.1-py3-none-any.whl", hash = "sha256:afb06ef8f25ba83d59a1d424bd7a5a939082f94b94e90ab5e6116bd2559deaa3"},
+    {file = "types-requests-2.31.0.2.tar.gz", hash = "sha256:6aa3f7faf0ea52d728bb18c0a0d1522d9bfd8c72d26ff6f61bfc3d06a411cf40"},
+    {file = "types_requests-2.31.0.2-py3-none-any.whl", hash = "sha256:56d181c85b5925cbc59f4489a57e72a8b2166f18273fd8ba7b6fe0c0b986f12a"},
 ]
 
 [package.dependencies]
@@ -4533,13 +4544,13 @@ files = [
 
 [[package]]
 name = "types-urllib3"
-version = "1.26.25.13"
+version = "1.26.25.14"
 description = "Typing stubs for urllib3"
 optional = false
 python-versions = "*"
 files = [
-    {file = "types-urllib3-1.26.25.13.tar.gz", hash = "sha256:3300538c9dc11dad32eae4827ac313f5d986b8b21494801f1bf97a1ac6c03ae5"},
-    {file = "types_urllib3-1.26.25.13-py3-none-any.whl", hash = "sha256:5dbd1d2bef14efee43f5318b5d36d805a489f6600252bb53626d4bfafd95e27c"},
+    {file = "types-urllib3-1.26.25.14.tar.gz", hash = "sha256:229b7f577c951b8c1b92c1bc2b2fdb0b49847bd2af6d1cc2a2e3dd340f3bda8f"},
+    {file = "types_urllib3-1.26.25.14-py3-none-any.whl", hash = "sha256:9683bbb7fb72e32bfe9d2be6e04875fbe1b3eeec3cbb4ea231435aa7fd6b4f0e"},
 ]
 
 [[package]]
@@ -4897,4 +4908,4 @@ jupyterlab = ["jupyterlab", "notebook"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<3.12"
-content-hash = "9cb1ab7baf70a3222d799e982944ce2b6568fa7907fa8fc048389fe9a1eee41c"
+content-hash = "d168fad4e61e343059b2659493a4172664ca1f7cae18be82be297f3af3306422"
